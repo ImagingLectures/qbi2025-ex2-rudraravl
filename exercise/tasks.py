@@ -2,6 +2,7 @@ from typing import Callable
 import numpy as np
 import albumentations as A
 from sklearn.neighbors import KNeighborsClassifier
+import sklearn
 
 def create_dataset_subset(data: np.ndarray, labels: np.ndarray, n: int) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -15,7 +16,8 @@ def create_dataset_subset(data: np.ndarray, labels: np.ndarray, n: int) -> tuple
     Returns:
         tuple[np.ndarray, np.ndarray]: 
     """
-    raise NotImplementedError("Need to implement for task 2.1")
+    new_data, new_labels = sklearn.utils.resample(data, labels, n_samples=n, stratify=labels)
+    return (new_data, new_labels)
     
 
 def augment_data(data: np.ndarray, labels: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -34,8 +36,32 @@ def augment_data(data: np.ndarray, labels: np.ndarray) -> tuple[np.ndarray, np.n
     Returns:
         tuple[np.ndarray, np.ndarray]: 
     """
-    raise NotImplementedError("Need to implement for task 2.2")
+    crop = A.Compose([
+        A.RandomCrop(width=64, height=64)
+    ])
+    h_flip = A.Compose([
+        A.HorizontalFlip(p=1)
+    ])
+    v_flip = A.Compose([
+        A.VerticalFlip(p=1)
+    ])
+    brightness_contrast = A.Compose([
+        A.RandomBrightnessContrast(p=1)
+    ])
+    shift_scale_rotate = A.Compose([
+        A.Affine(translate_percent=0.1, scale=(0.9, 1.1), rotate=(-30, 30), p=1)
+    ])
 
+    cropped = np.array([crop(image=image)['image'] for image in data])
+    h_flipped = np.array([h_flip(image=image)['image'] for image in data])
+    v_flipped = np.array([v_flip(image=image)['image'] for image in data])
+    brightness_contrasted = np.array([brightness_contrast(image=image)['image'] for image in data])
+    shifted_scaled_rotated = np.array([shift_scale_rotate(image=image)['image'] for image in data])
+
+    augmented_data = np.concatenate((cropped, h_flipped, v_flipped, brightness_contrasted, shifted_scaled_rotated), axis=0)
+    augmented_labels = np.concatenate([labels for _ in range(5)], axis=0)
+
+    return (augmented_data, augmented_labels)
 
 
 def split_train_test_dataset(data: np.ndarray, labels: np.ndarray, percentage: float = 0.8, shuffle: bool = False) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
@@ -51,11 +77,11 @@ def split_train_test_dataset(data: np.ndarray, labels: np.ndarray, percentage: f
     Returns:
         tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]: 
     """
-    raise NotImplementedError("Need to implement for task 2.3")
+    train_data, test_data, train_labels, test_labels = sklearn.model_selection.train_test_split(data, labels, test_size=1-percentage, shuffle=shuffle)
+    return (train_data, train_labels), (test_data, test_labels)
 
 
-
-def train_kNN(data: np.ndarray, labels: np.ndarray, k: int) -> np.ndarray:
+def train_kNN(data: np.ndarray, labels: np.ndarray, k: int) -> KNeighborsClassifier:
     """
     Implement the function to train kNN classifiers.
 
@@ -64,10 +90,13 @@ def train_kNN(data: np.ndarray, labels: np.ndarray, k: int) -> np.ndarray:
         labels (np.ndarray): 
         k (int): 
 
-    Returns: predictions
-        np.ndarray 
+    Returns: kNN Classifier
+        KNeighborsClassifier
     """
-    raise NotImplementedError("Need to implement for task 2.3")
+    data = data.reshape(data.shape[0], -1)
+    kNN = KNeighborsClassifier(n_neighbors=k)
+    kNN.fit(data, labels)
+    return kNN
     
 
 def predict_kNN(kNN: KNeighborsClassifier, data: np.ndarray) -> np.ndarray:
@@ -81,7 +110,8 @@ def predict_kNN(kNN: KNeighborsClassifier, data: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: 
     """
-    raise NotImplementedError("Need to implement for task 2.3")
+    data = data.reshape(data.shape[0], -1)
+    return np.array(kNN.predict(data))
     
 
 def evaluate_predictions(ground_truth: np.ndarray, labels: np.ndarray, metric: Callable) -> float:
@@ -96,5 +126,5 @@ def evaluate_predictions(ground_truth: np.ndarray, labels: np.ndarray, metric: C
     Returns:
         float: 
     """
-    raise NotImplementedError("Need to implement for task 2.3")
+    return metric(ground_truth, labels)
     

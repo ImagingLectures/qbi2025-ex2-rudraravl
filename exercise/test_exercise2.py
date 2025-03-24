@@ -12,6 +12,7 @@ def loaded_data():
     labels = pd.read_csv('malignancy.csv').malignancy.values
     return imgs, labels
 
+
 def test_dataset_subset(loaded_data):
     imgs, labels = loaded_data
 
@@ -36,6 +37,7 @@ def test_augment_data(loaded_data):
 
     assert (augmented_labels.sum()/2500 > 0.3) and (augmented_labels.sum()/2500 < 0.5)
 
+
 def test_split_train_test_data(loaded_data):
     imgs, labels = loaded_data
     imgs, labels = create_dataset_subset(imgs, labels, 500)
@@ -49,6 +51,7 @@ def test_split_train_test_data(loaded_data):
 
     assert (train_labels.sum()/400 > 0.3) and (train_labels.sum()/400 < 0.5)
     assert (test_labels.sum()/100 > 0.3) and (test_labels.sum()/100 < 0.5)
+
 
 def test_train_and_test_kNN(loaded_data):
     imgs, labels = loaded_data
@@ -76,8 +79,3 @@ def test_train_and_test_kNN_with_augmented_data(loaded_data):
     assert predictions.shape[0] == 100
     accuracy = evaluate_predictions(test_labels, predictions, accuracy_score)
     assert accuracy > 0.7
-
-
-
-
-
